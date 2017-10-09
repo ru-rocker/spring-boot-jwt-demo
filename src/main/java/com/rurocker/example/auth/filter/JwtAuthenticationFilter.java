@@ -19,6 +19,8 @@ import com.rurocker.example.auth.service.TokenAuthService;
 @Component
 public class JwtAuthenticationFilter extends GenericFilterBean {
 
+	private static final String TOKEN_HEADER = "Authorization";
+
 	@Autowired
 	private TokenAuthService tokenAuthService;
 	
@@ -26,7 +28,9 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
 			throws IOException, ServletException {
 		
-		Authentication authentication = tokenAuthService.getAuthentication((HttpServletRequest) request);
+		String token = ((HttpServletRequest) request).getHeader(TOKEN_HEADER);
+
+		Authentication authentication = tokenAuthService.getAuthentication(token);
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		filterChain.doFilter(request, response);

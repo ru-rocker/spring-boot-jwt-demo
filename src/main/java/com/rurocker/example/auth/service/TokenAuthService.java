@@ -8,8 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,7 +30,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Component
 public class TokenAuthService {
 
-	private static final String TOKEN_HEADER = "Authorization";
 	private static final String SECRET = "ru-rocker";
 	private static final String TOKEN_PREFIX = "Bearer";
 	private static final long EXPIRATION_TIME = 5 * 60 * 000; // 5 minutes
@@ -57,9 +54,8 @@ public class TokenAuthService {
 				.signWith(SignatureAlgorithm.HS512, SECRET.getBytes()).compact();
 	}
 
-	public Authentication getAuthentication(HttpServletRequest request)
+	public Authentication getAuthentication(String token)
 			throws JsonParseException, JsonMappingException, IOException {
-		String token = request.getHeader(TOKEN_HEADER);
 
 		if (token == null) {
 			throw new AuthenticationException("There is no Authorization token in the request header.");
