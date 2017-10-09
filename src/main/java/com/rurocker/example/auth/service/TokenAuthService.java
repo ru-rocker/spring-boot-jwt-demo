@@ -2,7 +2,11 @@ package com.rurocker.example.auth.service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -23,6 +27,7 @@ import com.rurocker.example.auth.vo.AuthVO;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 @Component
 public class TokenAuthService {
@@ -30,12 +35,27 @@ public class TokenAuthService {
 	private static final String TOKEN_HEADER = "Authorization";
 	private static final String SECRET = "ru-rocker";
 	private static final String TOKEN_PREFIX = "Bearer";
+	private static final long EXPIRATION_TIME = 5 * 60 * 000; // 5 minutes
 
 	@Autowired
 	private ObjectMapper objectMapper;
 
 	@Autowired
 	private Consul consul;
+
+	public String addAuthentication(Authentication authentication) throws IOException {
+		
+		Map<String,Object> map = new HashMap<>();
+		map.put("username", authentication.getPrincipal().toString());
+		map.put("roles", getRoles(authentication.getAuthorities()));
+		
+		String jti = UUID.randomUUID().toString();
+		String value = objectMapper.writeValueAsString(map);
+		addValue(jti, value);
+		
+		return Jwts.builder().setId(jti).setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+				.signWith(SignatureAlgorithm.HS512, SECRET.getBytes()).compact();
+	}
 
 	public Authentication getAuthentication(HttpServletRequest request)
 			throws JsonParseException, JsonMappingException, IOException {
@@ -60,9 +80,23 @@ public class TokenAuthService {
 		return user != null ? new UsernamePasswordAuthenticationToken(user, null, getAuthorities(roles)) : null;
 	}
 
+	private String[] getRoles(Collection<? extends GrantedAuthority> coll){
+		String[] roles = new String[coll.size()];
+		int i = 0;
+		for (GrantedAuthority ga : coll) {
+			roles[i++] = ga.getAuthority();
+		}
+		return roles;
+	}
+	
+	private void addValue(String key, String value){
+		KeyValueClient kvClient = consul.keyValueClient();
+		kvClient.putValue("session/" + key, value);
+	}
+	
 	private void removeKey(String key) {
 		KeyValueClient kvClient = consul.keyValueClient();
-		kvClient.deleteKey(key);
+		kvClient.deleteKey("session/" + key);
 	}
 
 	private String getValue(String key) {

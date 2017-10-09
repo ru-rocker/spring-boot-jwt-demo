@@ -13,6 +13,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.rurocker.example.auth.filter.ExceptionHandlerFilter;
 import com.rurocker.example.auth.filter.JwtAuthenticationFilter;
+import com.rurocker.example.auth.filter.JwtLoginFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -26,12 +27,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private ExceptionHandlerFilter exceptionHandlerFilter;
 
+	@Autowired
+	private JwtLoginFilter jwtLoginFilter;
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 
 		http.csrf().disable().authorizeRequests().antMatchers("/").permitAll().antMatchers(HttpMethod.POST, "/login")
 				.permitAll().anyRequest().authenticated().and()
-				// Filter to check the JWT present in header
+				.addFilterBefore(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.addFilterBefore(exceptionHandlerFilter, JwtAuthenticationFilter.class);
 	}
