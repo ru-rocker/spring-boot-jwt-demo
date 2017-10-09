@@ -36,7 +36,7 @@ public class TokenAuthService {
 
 	@Autowired
 	private Consul consul;
-	
+
 	public Authentication getAuthentication(HttpServletRequest request)
 			throws JsonParseException, JsonMappingException, IOException {
 		String token = request.getHeader(TOKEN_HEADER);
@@ -50,7 +50,6 @@ public class TokenAuthService {
 			jti = (String) Jwts.parser().setSigningKey(SECRET.getBytes())
 					.parseClaimsJws(token.replace(TOKEN_PREFIX, "")).getBody().getId();
 		} catch (ExpiredJwtException e) {
-			System.out.println(e.getClaims().getId());
 			removeKey(e.getClaims().getId());
 			throw e;
 		}
@@ -75,8 +74,7 @@ public class TokenAuthService {
 		if (json == null) {
 			throw new AuthenticationException("No associated JWT ID is registered.");
 		}
-		AuthVO result = objectMapper.readValue(json, AuthVO.class);
-		return result;
+		return objectMapper.readValue(json, AuthVO.class);
 	}
 
 	private Collection<GrantedAuthority> getAuthorities(String[] roles) {

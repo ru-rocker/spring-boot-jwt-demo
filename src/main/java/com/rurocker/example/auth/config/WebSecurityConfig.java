@@ -22,10 +22,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	private JwtAuthenticationFilter jwtAuthenticationFilter;
-	
+
 	@Autowired
 	private ExceptionHandlerFilter exceptionHandlerFilter;
-	
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 
@@ -33,7 +33,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.permitAll().anyRequest().authenticated().and()
 				// Filter to check the JWT present in header
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-		.addFilterBefore(exceptionHandlerFilter, JwtAuthenticationFilter.class);
+				.addFilterBefore(exceptionHandlerFilter, JwtAuthenticationFilter.class);
 	}
 
 }
